@@ -11,7 +11,7 @@ import requests
 
 # ---------------- CONFIG ----------------
 API_TOKEN = "c581428172c6ac"
-IPINFO_URL = "https://api.ipinfo.io/{}"
+IPINFO_BASE = "https://api.ipinfo.io/{}"
 
 # ---------------- UTIL ----------------
 def clear():
@@ -26,7 +26,7 @@ def banner():
 ╚██████╗   ██║   ██████╔╝███████╗██║  ██║   ██║   ╚██████╗██║  ██║
  ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝
 
-        CYBER TOOLKIT ULTIMATE v4.0
+        CYBER TOOLKIT V5 ULTRA
 --------------------------------------------------------
 Commands:
  neofetch        -> System info
@@ -66,32 +66,27 @@ def gpu_info():
     except:
         print("GPU info not supported on this OS")
 
-# ---------------- NETWORK / IP ----------------
+# ---------------- IPINFO MAX ----------------
 def fetch_ip_info(ip="me"):
-    url = IPINFO_URL.format(ip)
-    headers = {"Authorization": f"Bearer {API_TOKEN}"}
     try:
-        r = requests.get(url, headers=headers)
-        data = r.json()
-        if "error" in data:
-            print("Error:", data.get("error"))
+        url = IPINFO_BASE.format(ip if ip else "me")
+        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        print("Fetching IP data...\n")
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code != 200:
+            print("API ERROR:", r.status_code)
+            print(r.text)
             return
-        print("------------- IP INFORMATION -------------")
-        print(f"IP Address:      {data.get('ip')}")
-        print(f"Hostname:        {data.get('hostname')}")
-        print(f"City:            {data.get('city')}")
-        print(f"Region:          {data.get('region')}")
-        print(f"Country:         {data.get('country')}")
-        print(f"Postal:          {data.get('postal')}")
-        print(f"Org:             {data.get('org')}")
-        print(f"ASN:             {data.get('asn')}")
-        print(f"Location:        {data.get('loc')}")
-        print(f"Timezone:        {data.get('timezone')}")
-        print(f"Phone:           {data.get('phone')}")
-        print(f"Country Calling: {data.get('country_calling_code')}")
-        print(f"Currency:        {data.get('currency')}")
-        print(f"Languages:       {data.get('languages')}")
-        print("------------------------------------------\n")
+        data = r.json()
+        print("============= IP INFORMATION =============")
+        for key in ["ip","hostname","city","region","country","loc","postal","timezone","org"]:
+            if key in data:
+                print(f"{key.capitalize():15} {data[key]}")
+        # Extra fields if available
+        for extra in ["asn","company","privacy","phone","country_calling_code","currency","languages"]:
+            if extra in data:
+                print(f"{extra.capitalize():15} {data[extra]}")
+        print("==========================================\n")
     except Exception as e:
         print("Failed to fetch IP info:", e)
 
@@ -102,7 +97,7 @@ def public_ip():
     except:
         print("Failed to get public IP")
 
-# ---------------- OSINT TOOLS ----------------
+# ---------------- OSINT ----------------
 def osint_user():
     username = input("Username: ")
     sites = [
@@ -114,10 +109,7 @@ def osint_user():
     for site in sites:
         try:
             r = requests.get(site)
-            if r.status_code == 200:
-                print(f"[FOUND] {site}")
-            else:
-                print(f"[NOT FOUND] {site}")
+            print(f"[{'FOUND' if r.status_code==200 else 'NOT FOUND'}] {site}")
         except:
             print(f"[ERROR] {site}")
 
@@ -134,10 +126,7 @@ def email_osint():
     for site in sites:
         try:
             r = requests.get(site)
-            if r.status_code == 200:
-                print(f"[FOUND] {site}")
-            else:
-                print(f"[NOT FOUND] {site}")
+            print(f"[{'FOUND' if r.status_code==200 else 'NOT FOUND'}] {site}")
         except:
             print(f"[ERROR] {site}")
 
@@ -153,7 +142,7 @@ def http_headers():
     url = input("URL (https://example.com): ")
     try:
         r = requests.get(url)
-        for k, v in r.headers.items():
+        for k,v in r.headers.items():
             print(f"{k}: {v}")
     except:
         print("Failed fetching headers")
@@ -166,7 +155,7 @@ def hash_tool():
 def base64_tool():
     mode = input("encode/decode: ").lower()
     text = input("Text: ")
-    if mode == "encode":
+    if mode=="encode":
         print(base64.b64encode(text.encode()).decode())
     else:
         print(base64.b64decode(text.encode()).decode())
@@ -176,7 +165,7 @@ def port_scan():
     for port in range(1,1025):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(0.2)
-        if s.connect_ex(("127.0.0.1", port)) == 0:
+        if s.connect_ex(("127.0.0.1", port))==0:
             print(f"Port {port} OPEN")
         s.close()
 
@@ -186,39 +175,39 @@ def main():
     banner()
     while True:
         cmd = input("cyber> ").lower()
-        if cmd == "exit":
+        if cmd=="exit":
             break
-        elif cmd == "clear":
+        elif cmd=="clear":
             clear(); banner()
-        elif cmd == "neofetch":
+        elif cmd=="neofetch":
             neofetch()
-        elif cmd == "gpu":
+        elif cmd=="gpu":
             gpu_info()
-        elif cmd == "ip":
+        elif cmd=="ip":
             fetch_ip_info("me")
-        elif cmd == "fetch ip":
+        elif cmd=="fetch ip":
             ip = input("Enter IP: ")
             fetch_ip_info(ip)
-        elif cmd == "publicip":
+        elif cmd=="publicip":
             public_ip()
-        elif cmd == "osint user":
+        elif cmd=="osint user":
             osint_user()
-        elif cmd == "osint domain":
+        elif cmd=="osint domain":
             osint_domain()
-        elif cmd == "email osint":
+        elif cmd=="email osint":
             email_osint()
-        elif cmd == "dns":
+        elif cmd=="dns":
             dns_lookup()
-        elif cmd == "headers":
+        elif cmd=="headers":
             http_headers()
-        elif cmd == "hash":
+        elif cmd=="hash":
             hash_tool()
-        elif cmd == "base64":
+        elif cmd=="base64":
             base64_tool()
-        elif cmd == "ports":
+        elif cmd=="ports":
             port_scan()
         else:
             print("Unknown command")
 
-if __name__ == "__main__":
+if __name__=="__main__":
     main()
