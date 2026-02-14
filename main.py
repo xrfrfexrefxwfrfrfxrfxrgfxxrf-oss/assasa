@@ -1,9 +1,9 @@
-import requests
+import subprocess
 import os
 import sys
 import time
 
-API_URL = "https://api.ipwho.org/{}"
+API_TOKEN = "c581428172c6ac"
 
 def clear():
     os.system("cls" if os.name == "nt" else "clear")
@@ -15,8 +15,8 @@ def banner():
   \ \ /\ / / _ \ '_ \| |_ / _ \| '__| |/ / _` '_ \ 
    \ V  V /  __/ |_) |  _| (_) | |  |   < (_| | | |
     \_/\_/ \___|_.__/|_|  \___/|_|  |_|\_\__,_| |_|
-                                                    
-              W E B F E T C H   v1.0
+
+              W E B F E T C H   v3.0
 --------------------------------------------------------
 Commands:
   ip         -> Show your IP info
@@ -29,38 +29,31 @@ Commands:
 def loading():
     print("Fetching data", end="")
     for _ in range(3):
-        time.sleep(0.5)
+        time.sleep(0.4)
         print(".", end="", flush=True)
     print("\n")
 
-def get_ip_info(ip=""):
+def fetch_ip(ip=""):
     try:
         loading()
-        url = API_URL.format(ip)
-        response = requests.get(url)
-        data = response.json()
 
-        if not data.get("success", True):
-            print("Error:", data.get("message"))
-            return
+        if ip == "":
+            url = "https://api.ipinfo.io/lite/me"
+        else:
+            url = f"https://api.ipinfo.io/lite/{ip}"
+
+        result = subprocess.run(
+            ["curl", "-s", "-H", f"Authorization: Bearer {API_TOKEN}", url],
+            capture_output=True,
+            text=True
+        )
 
         print("------------- IP INFORMATION -------------")
-        print(f"IP Address\t{data.get('ip')}")
-        print(f"City\t\t{data.get('city')}")
-        print(f"Region\t\t{data.get('region')}")
-        print(f"Country\t\t{data.get('country')} ({data.get('country_code')})")
-        print(f"Postal Code\t{data.get('postal')}")
-        print(f"Latitude / Longitude\t{data.get('latitude')} , {data.get('longitude')}")
-        print(f"Time Zone\t{data.get('timezone')}")
-        print(f"Calling Code\t+{data.get('calling_code')}")
-        print(f"Currency\t{data.get('currency')}")
-        print(f"Languages\t{data.get('languages')}")
-        print(f"ASN\t\t{data.get('connection', {}).get('asn')}")
-        print(f"Org\t\t{data.get('connection', {}).get('org')}")
+        print(result.stdout)
         print("------------------------------------------\n")
 
     except Exception as e:
-        print("Failed to fetch data:", e)
+        print("Error:", e)
 
 def main():
     clear()
@@ -70,15 +63,14 @@ def main():
         cmd = input("webfetch> ").strip().lower()
 
         if cmd == "exit":
-            print("Goodbye 👋")
-            sys.exit()
+            break
 
         elif cmd == "ip":
-            get_ip_info("")
+            fetch_ip("")
 
         elif cmd == "fetch ip":
             ip = input("Enter IP: ").strip()
-            get_ip_info(ip)
+            fetch_ip(ip)
 
         elif cmd == "clear":
             clear()
@@ -86,6 +78,8 @@ def main():
 
         else:
             print("Unknown command")
+
+    input("\nPress ENTER to close...")
 
 if __name__ == "__main__":
     main()
