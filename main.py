@@ -6,12 +6,10 @@ import psutil
 import subprocess
 import hashlib
 import base64
-import time
 import requests
 
 # ---------------- CONFIG ----------------
 API_TOKEN = "c581428172c6ac"
-IPINFO_BASE = "https://api.ipinfo.io/{}"
 
 # ---------------- UTIL ----------------
 def clear():
@@ -19,76 +17,81 @@ def clear():
 
 def banner():
     print(r"""
- ██████╗██╗   ██╗██████╗ ███████╗███████╗████████╗ ██████╗██╗  ██╗
-██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝██╔════╝██║  ██║
-██║      ╚████╔╝ ██████╔╝█████╗  █████╗     ██║   ██║     ███████║
-██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══╝     ██║   ██║     ██╔══██║
-╚██████╗   ██║   ██████╔╝███████╗██║  ██║   ██║   ╚██████╗██║  ██║
- ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝
+ ██████╗██╗   ██╗██████╗ ███████╗███████╗████████╗
+██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝
+██║      ╚████╔╝ ██████╔╝█████╗  █████╗     ██║   
+██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══╝     ██║   
+╚██████╗   ██║   ██████╔╝███████╗██║        ██║   
+ ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝        ╚═╝   
 
-        CYBER TOOLKIT V5 ULTRA
+        CYBER TOOLKIT V6 ULTRA
 --------------------------------------------------------
 Commands:
- neofetch        -> System info
- gpu             -> GPU info
- ip              -> Show detailed IP info
- fetch ip        -> Lookup detailed IP
- publicip        -> Show public IP
- osint user      -> Username OSINT
- osint domain    -> Domain info
- email osint     -> Email OSINT
- headers         -> HTTP headers
- dns             -> DNS lookup
- whois           -> Whois lookup
- hash            -> Hash generator
- base64          -> Encode / Decode
- ports           -> Scan localhost ports
- clear           -> Clear screen
- exit            -> Quit
+ neofetch
+ gpu
+ ip
+ fetch ip
+ publicip
+ osint user
+ osint domain
+ email osint
+ headers
+ dns
+ whois
+ hash
+ base64
+ ports
+ clear
+ exit
 --------------------------------------------------------
 """)
 
-# ---------------- SYSTEM TOOLS ----------------
+# ---------------- SYSTEM ----------------
 def neofetch():
     print(f"User: {getpass.getuser()}")
     print(f"Hostname: {socket.gethostname()}")
     print(f"OS: {platform.system()} {platform.release()}")
     print(f"CPU: {platform.processor()}")
     print(f"RAM: {round(psutil.virtual_memory().total / (1024**3),2)} GB")
-    print(f"Python: {platform.python_version()}")
-    print("")
+    print(f"Python: {platform.python_version()}\n")
 
 def gpu_info():
     try:
-        result = subprocess.run(["wmic", "path", "win32_VideoController", "get", "name"],
-                                capture_output=True, text=True)
+        result = subprocess.run(
+            ["wmic", "path", "win32_VideoController", "get", "name"],
+            capture_output=True, text=True)
         print(result.stdout)
     except:
         print("GPU info not supported on this OS")
 
-# ---------------- IPINFO MAX ----------------
+# ---------------- IPINFO LITE ----------------
 def fetch_ip_info(ip="me"):
     try:
-        url = IPINFO_BASE.format(ip if ip else "me")
+        if ip == "" or ip.lower() == "me":
+            url = "https://api.ipinfo.io/lite/me"
+        else:
+            url = f"https://api.ipinfo.io/lite/{ip}"
+
         headers = {"Authorization": f"Bearer {API_TOKEN}"}
-        print("Fetching IP data...\n")
+
+        print("\nFetching IP data...\n")
+
         r = requests.get(url, headers=headers, timeout=10)
+
         if r.status_code != 200:
             print("API ERROR:", r.status_code)
             print(r.text)
             return
+
         data = r.json()
-        print("============= IP INFORMATION =============")
-        for key in ["ip","hostname","city","region","country","loc","postal","timezone","org"]:
-            if key in data:
-                print(f"{key.capitalize():15} {data[key]}")
-        # Extra fields if available
-        for extra in ["asn","company","privacy","phone","country_calling_code","currency","languages"]:
-            if extra in data:
-                print(f"{extra.capitalize():15} {data[extra]}")
-        print("==========================================\n")
+
+        print("============= IP INFORMATION (LITE) =============")
+        for key, value in data.items():
+            print(f"{key.capitalize():20} {value}")
+        print("=================================================\n")
+
     except Exception as e:
-        print("Failed to fetch IP info:", e)
+        print("IP fetch failed:", e)
 
 def public_ip():
     try:
@@ -120,8 +123,8 @@ def osint_domain():
 def email_osint():
     email = input("Email: ")
     sites = [
-        f"https://haveibeenpwned.com/unifiedsearch/{email}",
-        f"https://www.gravatar.com/{email}"
+        f"https://www.gravatar.com/{email}",
+        f"https://haveibeenpwned.com/unifiedsearch/{email}"
     ]
     for site in sites:
         try:
@@ -130,13 +133,13 @@ def email_osint():
         except:
             print(f"[ERROR] {site}")
 
-# ---------------- OTHER TOOLS ----------------
+# ---------------- NETWORK TOOLS ----------------
 def dns_lookup():
     domain = input("Domain: ")
     try:
         print("IP:", socket.gethostbyname(domain))
     except:
-        print("Failed DNS lookup")
+        print("DNS lookup failed")
 
 def http_headers():
     url = input("URL (https://example.com): ")
@@ -145,8 +148,18 @@ def http_headers():
         for k,v in r.headers.items():
             print(f"{k}: {v}")
     except:
-        print("Failed fetching headers")
+        print("Header fetch failed")
 
+def port_scan():
+    print("Scanning localhost ports 1-1024...")
+    for port in range(1,1025):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.2)
+        if s.connect_ex(("127.0.0.1", port))==0:
+            print(f"Port {port} OPEN")
+        s.close()
+
+# ---------------- UTIL TOOLS ----------------
 def hash_tool():
     text = input("Text: ")
     print("MD5:", hashlib.md5(text.encode()).hexdigest())
@@ -160,21 +173,13 @@ def base64_tool():
     else:
         print(base64.b64decode(text.encode()).decode())
 
-def port_scan():
-    print("Scanning localhost ports 1-1024...")
-    for port in range(1,1025):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(0.2)
-        if s.connect_ex(("127.0.0.1", port))==0:
-            print(f"Port {port} OPEN")
-        s.close()
-
 # ---------------- MAIN ----------------
 def main():
     clear()
     banner()
     while True:
         cmd = input("cyber> ").lower()
+
         if cmd=="exit":
             break
         elif cmd=="clear":
