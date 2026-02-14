@@ -19,30 +19,20 @@ def banner():
     print(r"""
  ██████╗██╗   ██╗██████╗ ███████╗███████╗████████╗
 ██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝
-██║      ╚████╔╝ ██████╔╝█████╗  █████╗     ██║   
-██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══╝     ██║   
-╚██████╗   ██║   ██████╔╝███████╗██║        ██║   
- ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝        ╚═╝   
+██║      ╚████╔╝ ██████╔╝█████╗  █████╗     ██║
+██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══╝     ██║
+╚██████╗   ██║   ██████╔╝███████╗██║        ██║
+ ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝        ╚═╝
 
-        CYBER TOOLKIT V6 ULTRA
+        CYBER TOOLKIT V7 FULL RECON
 --------------------------------------------------------
-Commands:
- neofetch
- gpu
- ip
- fetch ip
- publicip
- osint user
- osint domain
- email osint
- headers
- dns
- whois
- hash
- base64
- ports
- clear
- exit
+neofetch | gpu | ip | fetch ip | publicip
+osint user | osint domain | email osint
+subdomains | email domain | mx
+dns | headers | status | robots
+whois | ports
+hash | base64
+clear | exit
 --------------------------------------------------------
 """)
 
@@ -62,9 +52,9 @@ def gpu_info():
             capture_output=True, text=True)
         print(result.stdout)
     except:
-        print("GPU info not supported on this OS")
+        print("GPU info not supported")
 
-# ---------------- IPINFO LITE ----------------
+# ---------------- IP INTEL ----------------
 def fetch_ip_info(ip="me"):
     try:
         if ip == "" or ip.lower() == "me":
@@ -73,9 +63,6 @@ def fetch_ip_info(ip="me"):
             url = f"https://api.ipinfo.io/lite/{ip}"
 
         headers = {"Authorization": f"Bearer {API_TOKEN}"}
-
-        print("\nFetching IP data...\n")
-
         r = requests.get(url, headers=headers, timeout=10)
 
         if r.status_code != 200:
@@ -85,10 +72,35 @@ def fetch_ip_info(ip="me"):
 
         data = r.json()
 
-        print("============= IP INFORMATION (LITE) =============")
-        for key, value in data.items():
-            print(f"{key.capitalize():20} {value}")
-        print("=================================================\n")
+        ip_addr = data.get("ip", "N/A")
+        city = data.get("city", "N/A")
+        region = data.get("region", "N/A")
+        country = data.get("country", "N/A")
+        loc = data.get("loc", "N/A")
+        org = data.get("org", "N/A")
+        timezone = data.get("timezone", "N/A")
+        asn = data.get("asn", "N/A")
+
+        print("\n============= IP INTEL =============")
+        print(f"IP:        {ip_addr}")
+        print(f"City:      {city}")
+        print(f"Region:    {region}")
+        print(f"Country:   {country}")
+        print(f"Location:  {loc}")
+        print(f"Timezone:  {timezone}")
+        print(f"Org:       {org}")
+        print(f"ASN:       {asn}")
+
+        if loc != "N/A":
+            print(f"Google Maps: https://www.google.com/maps?q={loc}")
+
+        try:
+            host = socket.gethostbyaddr(ip_addr)[0]
+            print(f"Reverse DNS: {host}")
+        except:
+            print("Reverse DNS: N/A")
+
+        print("====================================\n")
 
     except Exception as e:
         print("IP fetch failed:", e)
@@ -122,18 +134,38 @@ def osint_domain():
 
 def email_osint():
     email = input("Email: ")
-    sites = [
-        f"https://www.gravatar.com/{email}",
-        f"https://haveibeenpwned.com/unifiedsearch/{email}"
-    ]
-    for site in sites:
-        try:
-            r = requests.get(site)
-            print(f"[{'FOUND' if r.status_code==200 else 'NOT FOUND'}] {site}")
-        except:
-            print(f"[ERROR] {site}")
+    print("Checking basic footprint...")
+    domain = email.split("@")[-1]
+    try:
+        print("Domain IP:", socket.gethostbyname(domain))
+    except:
+        print("Domain lookup failed")
 
-# ---------------- NETWORK TOOLS ----------------
+def subdomain_lookup():
+    domain = input("Domain: ")
+    subs = ["www", "mail", "ftp", "dev", "api", "test"]
+    for sub in subs:
+        full = f"{sub}.{domain}"
+        try:
+            ip = socket.gethostbyname(full)
+            print(f"[FOUND] {full} -> {ip}")
+        except:
+            pass
+
+def email_domain_check():
+    email = input("Email: ")
+    domain = email.split("@")[-1]
+    print("Domain:", domain)
+    try:
+        print("IP:", socket.gethostbyname(domain))
+    except:
+        print("Lookup failed")
+
+def mx_lookup():
+    domain = input("Domain: ")
+    os.system(f"nslookup -type=mx {domain}")
+
+# ---------------- NETWORK ----------------
 def dns_lookup():
     domain = input("Domain: ")
     try:
@@ -142,13 +174,29 @@ def dns_lookup():
         print("DNS lookup failed")
 
 def http_headers():
-    url = input("URL (https://example.com): ")
+    url = input("URL: ")
     try:
         r = requests.get(url)
         for k,v in r.headers.items():
             print(f"{k}: {v}")
     except:
         print("Header fetch failed")
+
+def http_status():
+    url = input("URL: ")
+    try:
+        r = requests.get(url)
+        print("Status Code:", r.status_code)
+    except:
+        print("Request failed")
+
+def robots_check():
+    domain = input("Domain: ")
+    try:
+        r = requests.get(f"https://{domain}/robots.txt")
+        print(r.text)
+    except:
+        print("robots.txt not found")
 
 def port_scan():
     print("Scanning localhost ports 1-1024...")
@@ -159,7 +207,7 @@ def port_scan():
             print(f"Port {port} OPEN")
         s.close()
 
-# ---------------- UTIL TOOLS ----------------
+# ---------------- UTIL ----------------
 def hash_tool():
     text = input("Text: ")
     print("MD5:", hashlib.md5(text.encode()).hexdigest())
@@ -201,16 +249,26 @@ def main():
             osint_domain()
         elif cmd=="email osint":
             email_osint()
+        elif cmd=="subdomains":
+            subdomain_lookup()
+        elif cmd=="email domain":
+            email_domain_check()
+        elif cmd=="mx":
+            mx_lookup()
         elif cmd=="dns":
             dns_lookup()
         elif cmd=="headers":
             http_headers()
+        elif cmd=="status":
+            http_status()
+        elif cmd=="robots":
+            robots_check()
+        elif cmd=="ports":
+            port_scan()
         elif cmd=="hash":
             hash_tool()
         elif cmd=="base64":
             base64_tool()
-        elif cmd=="ports":
-            port_scan()
         else:
             print("Unknown command")
 
